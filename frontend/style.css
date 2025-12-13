@@ -1,0 +1,20 @@
+body {font-family: system-ui, Arial, sans-serif; margin:0; background:#121212; color:#eee;}
+header {background:#1e1e1e; padding:1rem;}
+h1 {margin:0; font-size:1.6rem;}
+main {padding:1rem; max-width:900px; margin:0 auto;}
+section {margin-bottom:1.5rem; background:#1b1b1b; padding:1rem; border-radius:8px; box-shadow:0 0 0 1px #222;}
+.hidden {display:none;}
+button {background:#2d6cdf; color:#fff; border:none; padding:0.6rem 1rem; border-radius:6px; cursor:pointer; font-weight:600;}
+button:disabled {background:#444; cursor:not-allowed;}
+input[type=text] {width:100%; padding:0.5rem; border-radius:6px; border:1px solid #333; background:#222; color:#eee;}
+#dice-container, #kept-container {display:flex; gap:0.5rem; flex-wrap:wrap; margin:.5rem 0;}
+.die {width:46px; height:46px; background:#262626; display:flex; justify-content:center; align-items:center; font-size:1.2rem; border-radius:6px; position:relative; cursor:pointer; border:2px solid transparent;}
+.die.selected {border-color:#2d6cdf;}
+.die.kept {border-color:#34c759;}
+#combo-list {list-style:none; padding:0; display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:0.5rem;}
+#combo-list li {background:#262626; padding:0.5rem; border-radius:6px; cursor:pointer; font-size:0.85rem; border:1px solid #333;}
+#combo-list li:hover {background:#2d2d2d;}
+#scores-table table {width:100%; border-collapse:collapse;}
+#scores-table th, #scores-table td {border:1px solid #333; padding:0.4rem; text-align:center; font-size:0.75rem;}
+#message {min-height:1.2rem; font-size:0.9rem; color:#ffb347;}
+.actions {display:flex; gap:0.5rem;}

@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Yatzi Frontend</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <h1>Yatzi</h1>
+  </header>
+  <main>
+    <section id="new-game">
+      <h2>Nueva Partida</h2>
+      <form id="game-form">
+        <label>Jugadores (separados por coma):<br>
+          <input type="text" id="players" placeholder="Ana,Beto" required />
+        </label>
+        <button type="submit">Crear juego</button>
+      </form>
+      <div id="game-info" class="hidden">
+        <p><strong>ID Juego:</strong> <span id="game-id"></span></p>
+      </div>
+    </section>
+
+    <section id="turn" class="hidden">
+      <h2>Turno Actual</h2>
+      <p><strong>Jugador:</strong> <span id="current-player"></span></p>
+      <p><strong>Tiradas usadas:</strong> <span id="rolls-used"></span> / 3</p>
+      <div id="dice-container"></div>
+      <div id="kept-container"></div>
+      <div class="actions">
+        <button id="roll-btn">Tirar Dados</button>
+        <button id="keep-btn">Conservar Seleccionados</button>
+      </div>
+    </section>
+
+    <section id="combinations" class="hidden">
+      <h2>Combinaciones Disponibles</h2>
+      <ul id="combo-list"></ul>
+    </section>
+
+    <section id="scores" class="hidden">
+      <h2>Puntajes</h2>
+      <div id="scores-table"></div>
+    </section>
+
+    <section id="messages">
+      <p id="message"></p>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
