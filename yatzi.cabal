@@ -6,19 +6,21 @@ build-type:          Simple
 library
   hs-source-dirs: src
   exposed-modules: Game.Types, Game.Logic, Game.Server
-  build-depends: base >=4.14 && <5, containers, random, aeson, text, scotty, transformers, http-types
+  build-depends: base >=4.14 && <5, containers, random, aeson, text, scotty, transformers, http-types, wai-middleware-static, gloss
   default-language: Haskell2010
 
 executable yatzi
   hs-source-dirs: src
   main-is: Main.hs
-  build-depends: base >=4.14 && <5, containers, random, yatzi
+  build-depends: base >=4.14 && <5, containers, random, aeson, gloss, yatzi
+  other-modules: Game.Types, Game.Logic, Game.UI, Game.AI
   ghc-options: -Wall
   default-language: Haskell2010
 
 executable yatzi-server
   hs-source-dirs: src
   main-is: ServerMain.hs
-  build-depends: base >=4.14 && <5, containers, random, aeson, text, scotty, transformers, http-types, yatzi
+  build-depends: base >=4.14 && <5, containers, random, aeson, text, scotty, transformers, http-types, wai-middleware-static, yatzi
+  other-modules: Game.Types, Game.Logic, Game.Server
   ghc-options: -Wall
   default-language: Haskell2010

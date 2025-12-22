@@ -54,7 +54,13 @@ function renderState(st) {
   el('rolls-used').textContent = st.rollsUsed;
   renderDice(st.dice, st.kept);
   renderCombinations(st.available);
-  renderScores(st.scores);
+  renderScores(st.scores, st.available, st.currentPlayer);
+  // Update roll indicator
+  const ri = el('roll-indicator');
+  ri.innerHTML = '';
+  const title = document.createElement('span'); title.className = 'title'; title.textContent = 'GIRA';
+  ri.appendChild(title);
+  for (let i=1;i<=3;i++){ const s = document.createElement('span'); s.className = 'step' + (i<=st.rollsUsed? ' active':'' ); s.textContent = String(i); ri.appendChild(s); }
   el('roll-btn').disabled = st.rollsUsed >= 3;
   el('keep-btn').disabled = st.dice.length === 0 || st.rollsUsed === 0;
 }
@@ -67,8 +73,8 @@ function renderDice(dice, kept) {
   kc.innerHTML = '<h3>Conservados</h3>';
   dice.forEach((val, i) => {
     const div = document.createElement('div');
-    div.className = 'die';
-    div.textContent = val;
+    div.className = 'die v' + String(val);
+    div.setAttribute('aria-label', 'Dado ' + String(val));
     div.addEventListener('click', () => {
       if (div.classList.contains('kept')) return; // ya conservado
       if (selectedDice.has(i)) { selectedDice.delete(i); div.classList.remove('selected'); }
@@ -78,8 +84,8 @@ function renderDice(dice, kept) {
   });
   kept.forEach((val) => {
     const div = document.createElement('div');
-    div.className = 'die kept';
-    div.textContent = val;
+    div.className = 'die kept v' + String(val);
+    div.setAttribute('aria-label', 'Dado ' + String(val));
     kc.appendChild(div);
   });
 }
@@ -95,27 +101,85 @@ function renderCombinations(list) {
   });
 }
 
-function renderScores(scoresArr) {
-  // scoresArr es array de arrays: [[jugador, [[comb, punt], ...]], ...]
-  const container = el('scores-table');
+function renderScores(scoresArr, available = [], currentPlayer = null) {
+  // Build scoreboard similar to reference: labels + per-player cells + bonus
+  const container = el('scoreboard');
   container.innerHTML = '';
   if (!Array.isArray(scoresArr)) return;
-  const table = document.createElement('table');
-  const header = document.createElement('tr');
-  header.innerHTML = '<th>Jugador</th><th>Combinaciones</th>';
-  table.appendChild(header);
-  scoresArr.forEach(entry => {
-    const [jug, combos] = entry;
-    const tr = document.createElement('tr');
-    const tdJug = document.createElement('td');
-    tdJug.textContent = jug;
-    const tdComb = document.createElement('td');
-    tdComb.style.textAlign = 'left';
-    tdComb.innerHTML = combos.map(c => `${c[0]}: ${c[1]}`).join('<br>');
-    tr.appendChild(tdJug); tr.appendChild(tdComb);
-    table.appendChild(tr);
+
+  const COMBO_ORDER = ['unos','doses','treses','cuatro','cinco','seis','trio','cuarteto','fullhouse','pequenaescalera','granescalera','yatzy','chance'];
+  const LABELS = {
+    unos: {type:'pip', v:1}, doses:{type:'pip', v:2}, treses:{type:'pip', v:3}, cuatro:{type:'pip', v:4}, cinco:{type:'pip', v:5}, seis:{type:'pip', v:6},
+    trio: {type:'text', t:'3X'}, cuarteto:{type:'text', t:'4X'}, fullhouse:{type:'text', t:'🏠'},
+    pequenaescalera:{type:'text', t:'SMALL'}, granescalera:{type:'text', t:'LARGE'}, yatzy:{type:'text', t:'YATZY'}, chance:{type:'text', t:'?'}
+  };
+
+  // Map scores per player
+  const players = scoresArr.map(([jug]) => jug);
+  const scoreMap = new Map(scoresArr.map(([jug, list]) => [jug, new Map(list.map(([comb, val]) => [String(comb).toLowerCase(), val]))]));
+
+  const sb = document.createElement('div');
+  sb.className = 'scoreboard';
+
+  // Top header: player names and VS badge
+  const top = document.createElement('div');
+  top.className = 'sb-top';
+  const left = document.createElement('div'); left.className = 'pname'; left.textContent = players[0] || 'P1';
+  const mid = document.createElement('div'); mid.className = 'vs'; mid.textContent = 'VS';
+  const right = document.createElement('div'); right.className = 'pname right'; right.textContent = players[1] || players[0] || 'P2';
+  top.append(left, mid, right);
+  sb.appendChild(top);
+
+  const grid = document.createElement('div');
+  grid.className = 'sb-grid';
+
+  // Helper to create label cell
+  const mkLabel = (key) => {
+    const c = document.createElement('div');
+    c.className = 'sb-cell label';
+    const L = LABELS[key];
+    if (!L) { c.textContent = key; return c; }
+    if (L.type === 'pip') { const p = document.createElement('div'); p.className = 'pip v'+L.v; c.appendChild(p); }
+    else { c.textContent = L.t; }
+    return c;
+  };
+
+  const lowerAvailable = new Set((available||[]).map(s=>String(s).toLowerCase()));
+
+  // Each row: label + per player cell
+  COMBO_ORDER.forEach((key) => {
+    const row = document.createElement('div'); row.className = 'sb-row';
+    grid.appendChild(mkLabel(key));
+    players.forEach((jug) => {
+      const cell = document.createElement('div');
+      const val = (scoreMap.get(jug) || new Map()).get(key);
+      if (typeof val === 'number') { cell.className = 'sb-cell score'; cell.textContent = String(val); }
+      else {
+        cell.className = 'sb-cell play';
+        if (jug === currentPlayer && lowerAvailable.has(key)) {
+          cell.classList.add('clickable');
+          cell.addEventListener('click', () => chooseCombination(key));
+          cell.textContent = '';
+        }
+      }
+      grid.appendChild(cell);
+    });
   });
-  container.appendChild(table);
+
+  // Bonus row for upper section
+  const bonus = document.createElement('div'); bonus.className = 'sb-bonus';
+  const blabel = document.createElement('div'); blabel.className = 'sb-cell label bonus-label'; blabel.textContent = 'BONUS +35'; bonus.appendChild(blabel);
+  players.forEach((jug) => {
+    const m = scoreMap.get(jug) || new Map();
+    const upperKeys = ['unos','doses','treses','cuatro','cinco','seis'];
+    const sum = upperKeys.reduce((acc,k)=> acc + (typeof m.get(k)==='number'? m.get(k):0), 0);
+    const wrap = document.createElement('div'); wrap.className = 'sb-cell score'; wrap.textContent = `${sum}/63`;
+    bonus.appendChild(wrap);
+  });
+
+  sb.appendChild(grid);
+  sb.appendChild(bonus);
+  container.appendChild(sb);
 }
 
 // Acciones

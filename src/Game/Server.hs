@@ -15,6 +15,7 @@ import Game.Logic (puntaje)
 import Data.Aeson (FromJSON, ToJSON, toJSON, object, (.=), parseJSON)
 import GHC.Generics (Generic)
 import Data.Char (toLower)
+import Network.Wai.Middleware.Static (staticPolicy, addBase)
 
 -- Requests
 newtype NewGameRequest = NewGameRequest { players :: [Jugador] } deriving (Show, Generic)
@@ -57,10 +58,14 @@ startServer :: IO ()
 startServer = do
   storage <- newIORef (0 :: Int, M.empty :: M.Map Int GameState)
   scotty 3000 $ do
+    middleware $ staticPolicy (addBase "frontend")
     let addCORS = do
           setHeader "Access-Control-Allow-Origin" "*"
           setHeader "Access-Control-Allow-Headers" "Content-Type"
           setHeader "Access-Control-Allow-Methods" "GET,POST,OPTIONS"
+
+    -- Serve frontend at root
+    get "/" $ file "frontend/index.html"
 
     -- Preflight OPTIONS handlers for CORS
     options "/game" $ addCORS >> text ""

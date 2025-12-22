@@ -40,6 +40,16 @@
   (major1) == 0 && (major2) <  6 || \
   (major1) == 0 && (major2) == 6 && (minor) <= 7)
 #endif /* MIN_VERSION_containers */
+/* package gloss-1.13.2.2 */
+#ifndef VERSION_gloss
+#define VERSION_gloss "1.13.2.2"
+#endif /* VERSION_gloss */
+#ifndef MIN_VERSION_gloss
+#define MIN_VERSION_gloss(major1,major2,minor) (\
+  (major1) <  1 || \
+  (major1) == 1 && (major2) <  13 || \
+  (major1) == 1 && (major2) == 13 && (minor) <= 2)
+#endif /* MIN_VERSION_gloss */
 /* package http-types-0.12.4 */
 #ifndef VERSION_http_types
 #define VERSION_http_types "0.12.4"
@@ -90,6 +100,16 @@
   (major1) == 0 && (major2) <  6 || \
   (major1) == 0 && (major2) == 6 && (minor) <= 1)
 #endif /* MIN_VERSION_transformers */
+/* package wai-middleware-static-0.9.3 */
+#ifndef VERSION_wai_middleware_static
+#define VERSION_wai_middleware_static "0.9.3"
+#endif /* VERSION_wai_middleware_static */
+#ifndef MIN_VERSION_wai_middleware_static
+#define MIN_VERSION_wai_middleware_static(major1,major2,minor) (\
+  (major1) <  0 || \
+  (major1) == 0 && (major2) <  9 || \
+  (major1) == 0 && (major2) == 9 && (minor) <= 3)
+#endif /* MIN_VERSION_wai_middleware_static */
 
 /* tool gcc-14.0.6 */
 #ifndef TOOL_VERSION_gcc
