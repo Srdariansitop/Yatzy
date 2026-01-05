@@ -4,7 +4,7 @@ module Game.UI (runUI) where
 
 import Graphics.Gloss
 import Graphics.Gloss.Interface.Pure.Game
-import System.Random (StdGen, mkStdGen)
+import System.Random (StdGen, mkStdGen, newStdGen)
 import qualified Data.Map as M
 import Data.List (sortBy)
 import Game.Types
@@ -96,9 +96,14 @@ calcularGanador :: GameState -> Maybe String
 calcularGanador st =
   let players = jugadores st
       scores = puntajes st
+      upperSection = [Unos, Doses, Treses, Cuatro, Cinco, Seis]
       playerTotals = map (\player -> 
         let playerScores = M.findWithDefault M.empty player scores
-        in (player, sum $ M.elems playerScores)) players
+            baseTotal = sum $ M.elems playerScores
+            upperSum = sum [M.findWithDefault 0 c playerScores | c <- upperSection]
+            bonus = if upperSum >= 63 then 35 else 0
+            total = baseTotal + bonus
+        in (player, total)) players
       sorted = sortBy (\(_,a) (_,b) -> compare b a) playerTotals
   in case sorted of
     [] -> Nothing
@@ -332,9 +337,13 @@ renderFinalScores :: UIState -> Picture
 renderFinalScores UIState{gameState} =
   let players = jugadores gameState
       scores = puntajes gameState
+      upperSection = [Unos, Doses, Treses, Cuatro, Cinco, Seis]
       playerTotals = map (\player -> 
         let playerScores = M.findWithDefault M.empty player scores
-            total = sum $ M.elems playerScores
+            baseTotal = sum $ M.elems playerScores
+            upperSum = sum [M.findWithDefault 0 c playerScores | c <- upperSection]
+            bonus = if upperSum >= 63 then 35 else 0
+            total = baseTotal + bonus
         in (player, total)) players
       sorted = sortBy (\(_,a) (_,b) -> compare b a) playerTotals
   in pictures $ 
@@ -447,10 +456,10 @@ handleGridAndDice (mx, my) ui@UIState{gameState, selectedDice}
          else ui
   | otherwise = ui
 
-initialState :: UIState
-initialState = UIState 
+initialState :: StdGen -> UIState
+initialState gen = UIState 
   (inicializarEstado ["Tu", "IA"]) 
-  (mkStdGen 42) 
+  gen
   [] 
   (0,0) 
   (M.fromList [("Tu", False), ("IA", True)]) 
@@ -462,4 +471,6 @@ initialState = UIState
   AnimNone -- Estado inicial
 
 runUI :: IO ()
-runUI = play (InWindow "Yatzi Pro" (windowW, windowH) (50, 50)) clrBack 30 initialState render handleEvent update
+runUI = do
+  gen <- newStdGen  -- Obtener semilla aleatoria basada en el tiempo
+  play (InWindow "Yatzi Pro" (windowW, windowH) (50, 50)) clrBack 30 (initialState gen) render handleEvent update

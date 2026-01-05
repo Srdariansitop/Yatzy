@@ -1,7 +1,6 @@
 module Game.Logic (
     puntaje,
     hasFullHouse,
-    contains,
     inicializarEstado,
     puedeTirar,
     aplicarTirada,
@@ -27,8 +26,8 @@ puntaje Trio dados = if any (\x -> count x dados >= 3) [1..6]
 puntaje Cuarteto dados = if any (\x -> count x dados >= 4) [1..6]
                         then sum dados else 0
 puntaje FullHouse dados = if hasFullHouse dados then 25 else 0
-puntaje PequenaEscalera dados = if sort dados `contains` [1,2,3,4,5] then 30 else 0
-puntaje GranEscalera dados = if sort dados `contains` [2,3,4,5,6] then 40 else 0
+puntaje PequenaEscalera dados = if hasSmallStraight dados then 30 else 0
+puntaje GranEscalera dados = if hasLargeStraight dados then 40 else 0
 puntaje Yatzy dados = if any (\x -> count x dados == 5) [1..6] then 50 else 0
 puntaje Chance dados = sum dados
 
@@ -38,8 +37,22 @@ count x = length . filter (== x)
 hasFullHouse :: Tiro -> Bool
 hasFullHouse dados = sort (map length (group (sort dados))) == [2,3]
 
-contains :: Eq a => [a] -> [a] -> Bool
-contains xs ys = all (`elem` xs) ys
+hasSmallStraight :: Tiro -> Bool
+hasSmallStraight dados = 
+  let sorted = sort dados
+  in [1,2,3,4] `isSubsequenceOf` sorted || [2,3,4,5] `isSubsequenceOf` sorted || [3,4,5,6] `isSubsequenceOf` sorted
+
+hasLargeStraight :: Tiro -> Bool
+hasLargeStraight dados = 
+  let sorted = sort dados
+  in [1,2,3,4,5] `isSubsequenceOf` sorted || [2,3,4,5,6] `isSubsequenceOf` sorted
+
+isSubsequenceOf :: Eq a => [a] -> [a] -> Bool
+isSubsequenceOf [] _ = True
+isSubsequenceOf _ [] = False
+isSubsequenceOf (x:xs) (y:ys)
+  | x == y    = isSubsequenceOf xs ys
+  | otherwise = isSubsequenceOf (x:xs) ys
 
 -- Inicializar estado del juego
 inicializarEstado :: [Jugador] -> GameState
