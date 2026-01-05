@@ -47,6 +47,13 @@ lighten c = case rgbaOfColor c of
 data MenuState = MainMenu | PlayingGame | GameOver deriving (Eq, Show)
 data AIAction = AIRolling | AIKeeping | AIChoosing | NoAction deriving (Eq, Show)
 
+-- NUEVO: Estado de Animación
+data AnimState 
+  = AnimNone
+  | AnimRolling Float       -- Tiempo restante para terminar de rodar
+  | AnimScoring Float Combinacion -- Tiempo restante, Combinación elegida
+  deriving (Eq, Show)
+
 data UIButton = UIButton
   { bLabel  :: String
   , bPos    :: (Float, Float)
@@ -66,6 +73,7 @@ data UIState = UIState
   , aiAction     :: AIAction
   , aiDiceToKeep :: [Int]
   , gameWinner   :: Maybe String
+  , animState    :: AnimState -- NUEVO CAMPO
   }
 
 --------------------------------------------------------------------------------
@@ -101,7 +109,13 @@ calcularGanador st =
 
 isCurrentPlayerAI :: UIState -> Bool
 isCurrentPlayerAI UIState{gameState} = 
-  M.findWithDefault False (jugadores gameState !! turnoActual gameState) (M.fromList [("Tu", False), ("IA", True)]) -- Fallback seguro
+  M.findWithDefault False (jugadores gameState !! turnoActual gameState) (M.fromList [("Tu", False), ("IA", True)])
+
+-- Utilidad para generar ruido visual basado en tiempo (pseudo-random para animaciones)
+pseudoRandomDie :: Float -> Int -> Int
+pseudoRandomDie t idx = 
+    let seed = floor (t * 1000) + idx * 100
+    in (seed `mod` 6) + 1
 
 --------------------------------------------------------------------------------
 -- 4. RENDERIZADO DE COMPONENTES
@@ -126,6 +140,7 @@ roundedRect w h r = pictures
   , translate (-w/2+r) (-h/2+r) $ circleSolid r
   ]
 
+-- MODIFICADO: drawDie ahora acepta un posible offset o rotación si quisiéramos
 drawDie :: [Int] -> Int -> Int -> Picture
 drawDie selected idx val =
   let isSelected = idx `elem` selected
@@ -160,7 +175,10 @@ isInside (mx, my) UIButton{bPos=(bx, by), bSize=(bw, bh)} =
   my >= by - bh/2 && my <= by + bh/2
 
 activeButtons :: UIState -> [UIButton]
-activeButtons ui@UIState{menuState} = case menuState of
+activeButtons ui@UIState{menuState, animState} = 
+  -- Si hay animación activa, deshabilitamos botones (lista vacía)
+  if animState /= AnimNone then [] else
+  case menuState of
   MainMenu ->
     [ UIButton "2 JUGADORES" (-220, -50) (300, 80) clrPrimary 
         (\s -> s { menuState = PlayingGame, aiPlayers = M.fromList [("P1", False), ("P2", False)], 
@@ -169,38 +187,67 @@ activeButtons ui@UIState{menuState} = case menuState of
         (\s -> s { menuState = PlayingGame, aiPlayers = M.fromList [("Tu", False), ("IA", True)], 
                    gameState = inicializarEstado ["Tu", "IA"], gameWinner = Nothing })
     ]
-  
+   
   PlayingGame -> 
     if not (isCurrentPlayerAI ui) 
-    then [ UIButton "TIRAR DADOS" (panelLX - 100, -100) (180, 50) clrPrimary ejecutarTiradaBtn
+    then [ UIButton "TIRAR DADOS" (panelLX - 100, -100) (180, 50) clrPrimary triggerRoll
          , UIButton "CONSERVAR"   (panelLX + 100, -100) (180, 50) clrSuccess ejecutarConservarBtn
          ]
     else []
-  
+   
   GameOver ->
     [ UIButton "VOLVER AL MENU" (0, -180) (350, 70) clrPrimary 
         (\s -> s { menuState = MainMenu, gameState = inicializarEstado ["P1", "P2"], 
-                   gameWinner = Nothing, selectedDice = [], aiAction = NoAction })
+                   gameWinner = Nothing, selectedDice = [], aiAction = NoAction, animState = AnimNone })
     , UIButton "CERRAR JUEGO" (0, -270) (350, 70) clrAccent 
         (\_ -> error "Juego cerrado")
     ]
 
-ejecutarTiradaBtn :: UIState -> UIState
-ejecutarTiradaBtn ui@UIState{gameState, rng} 
-  | puedeTirar gameState = let (rng', st') = aplicarTirada rng gameState in ui { gameState = st', rng = rng', selectedDice = [] }
+-- MODIFICADO: Trigger animación en vez de acción directa
+triggerRoll :: UIState -> UIState
+triggerRoll ui@UIState{gameState}
+  | puedeTirar gameState = ui { animState = AnimRolling 0.5, selectedDice = [] } -- 0.5 segundos de animación
   | otherwise = ui
+
+-- Esta función se llama internamente cuando la animación termina
+finalizarTirada :: UIState -> UIState
+finalizarTirada ui@UIState{gameState, rng} =
+  let (rng', st') = aplicarTirada rng gameState 
+  in ui { gameState = st', rng = rng', selectedDice = [], animState = AnimNone }
 
 ejecutarConservarBtn :: UIState -> UIState
 ejecutarConservarBtn ui@UIState{gameState, selectedDice}
   | not (null $ dadosActuales gameState) = ui { gameState = conservarDados (map (+1) selectedDice) gameState, selectedDice = [] }
   | otherwise = ui
 
+-- MODIFICADO: Trigger animación de puntaje
+triggerScore :: Combinacion -> UIState -> UIState
+triggerScore combo ui = ui { animState = AnimScoring 0.4 combo } -- 0.4 segundos de "pop"
+
+-- Esta función se llama internamente cuando la animación termina
+finalizarScore :: Combinacion -> UIState -> UIState
+finalizarScore combo ui@UIState{gameState} =
+   ui { gameState = elegirCombinacion combo gameState, animState = AnimNone }
+
 --------------------------------------------------------------------------------
 -- 6. UPDATE Y MOTOR IA
 --------------------------------------------------------------------------------
 
 update :: Float -> UIState -> UIState
-update dt ui@UIState{gameState, menuState, aiThinkTime}
+update dt ui@UIState{gameState, menuState, aiThinkTime, animState}
+  
+  -- 1. Manejo de ANIMACIONES (Prioridad Alta)
+  | AnimRolling t <- animState = 
+      if t > 0 
+      then ui { animState = AnimRolling (t - dt) }
+      else finalizarTirada ui
+      
+  | AnimScoring t combo <- animState =
+      if t > 0
+      then ui { animState = AnimScoring (t - dt) combo }
+      else finalizarScore combo ui
+
+  -- 2. Resto de la lógica estándar
   | menuState == GameOver = ui
   | juegoTerminado gameState = 
       let winner = calcularGanador gameState
@@ -220,7 +267,7 @@ actuarIA ui@UIState{gameState, rng, aiAction} =
   in case aiAction of
     NoAction -> 
       if tiradas == 0 
-      then ejecutarTiradaBtn ui { aiAction = AIRolling, aiThinkTime = 0 }
+      then triggerRoll ui { aiAction = AIRolling, aiThinkTime = 0 } -- Usa triggerRoll para animar IA también
       else ui { aiAction = AIKeeping, aiDiceToKeep = aiChooseDice dados, aiThinkTime = 0 }
     
     AIKeeping ->
@@ -232,13 +279,13 @@ actuarIA ui@UIState{gameState, rng, aiAction} =
 
     AIRolling ->
       if tiradas < 3
-      then let (rng', st') = aplicarTirada rng gameState
-           in ui { gameState = st', rng = rng', aiAction = NoAction, aiThinkTime = 0 }
+      then triggerRoll ui { aiAction = AIRolling, aiThinkTime = 0 } -- Usa triggerRoll
       else ui { aiAction = AIChoosing, aiThinkTime = 0 }
 
     AIChoosing ->
       let mejorCombo = aiChooseCombo gameState
-      in ui { gameState = elegirCombinacion mejorCombo gameState, aiAction = NoAction, aiThinkTime = 0 }
+      -- Usa triggerScore para que veamos qué elige la IA
+      in triggerScore mejorCombo ui { aiAction = NoAction, aiThinkTime = 0 } 
 
 --------------------------------------------------------------------------------
 -- 7. RENDERIZADO
@@ -300,45 +347,66 @@ renderFinalScores UIState{gameState} =
             ]) sorted [0..]
 
 renderGame :: UIState -> Picture
-renderGame ui@UIState{gameState, aiAction, menuState} = pictures
+renderGame ui@UIState{gameState, aiAction, menuState, animState} = pictures
   [ translate panelLX 150 $ rectWithBorder 450 450 clrPanel
   , translate (panelLX - 180) 330 $ drawText 0.2 $ "Turno: " ++ (jugadores gameState !! turnoActual gameState)
   , translate (panelLX - 180) 290 $ drawText 0.12 $ "Tiradas: " ++ show (tiradasRealizadas gameState)
   , translate panelLX 150 $ renderDiceSection ui
   , translate scoreRX 0 $ renderScoreboard ui
-  , if isCurrentPlayerAI ui && menuState == PlayingGame 
+  , if isCurrentPlayerAI ui && menuState == PlayingGame && animState == AnimNone
     then translate panelLX (-280) $ drawText 0.15 ("IA pensando: " ++ show aiAction) 
     else blank
   ]
 
 renderDiceSection :: UIState -> Picture
-renderDiceSection UIState{gameState, selectedDice} = pictures 
+renderDiceSection UIState{gameState, selectedDice, animState} = 
+  let currentDice = dadosActuales gameState
+      conservedDice = dadosConservados gameState
+      
+      -- ANIMACIÓN DADOS:
+      -- Si estamos rodando, generar dados visuales aleatorios y agitarlos
+      (displayDice, shakeY) = case animState of
+         AnimRolling t -> 
+            let shake = sin (t * 50) * 5 -- Vibración vertical
+                fakeDice = [ pseudoRandomDie t i | i <- [0..length currentDice - 1] ]
+            in (fakeDice, shake)
+         _ -> (currentDice, 0)
+
+  in pictures 
   [ translate (-200) 60 $ drawText 0.12 "DISPONIBLES:"
-  , translate (-160) 0 $ pictures $ zipWith (drawDie selectedDice) [0..] (dadosActuales gameState)
+  , translate (-160) shakeY $ pictures $ zipWith (drawDie selectedDice) [0..] displayDice
   , translate (-200) (-80) $ drawText 0.12 "CONSERVADOS:"
-  , translate (-160) (-140) $ pictures $ zipWith (drawDie []) [0..] (dadosConservados gameState)
+  , translate (-160) (-140) $ pictures $ zipWith (drawDie []) [0..] conservedDice
   ]
 
 renderScoreboard :: UIState -> Picture
-renderScoreboard UIState{gameState} = 
+renderScoreboard ui@UIState{gameState} = 
   let combos = allCombinations
       players = jugadores gameState
   in pictures $
     [ rectWithBorder 520 700 clrPanel
     , translate (-30) 275 $ drawText 0.12 (players !! 0)
     , translate 70 275  $ drawText 0.12 (if length players > 1 then players !! 1 else "")
-    ] ++ zipWith (drawScoreRow gameState) [0..] combos
+    ] ++ zipWith (drawScoreRow ui) [0..] combos
 
-drawScoreRow :: GameState -> Int -> Combinacion -> Picture
-drawScoreRow st row combo =
-  let y = gridTop - (fromIntegral row * cellH)
+drawScoreRow :: UIState -> Int -> Combinacion -> Picture
+drawScoreRow UIState{gameState, animState} row combo =
+  let st = gameState
+      y = gridTop - (fromIntegral row * cellH)
       p1 = jugadores st !! 0
       p2 = if length (jugadores st) > 1 then jugadores st !! 1 else ""
       sc1 = M.lookup combo (M.findWithDefault M.empty p1 (puntajes st))
       sc2 = if p2 /= "" then M.lookup combo (M.findWithDefault M.empty p2 (puntajes st)) else Nothing
+      
+      -- ANIMACIÓN PUNTAJE:
+      -- Si se está animando esta combinación, aplicar efecto de escala (pop)
+      animScale = case animState of
+         AnimScoring t c | c == combo -> 1.0 + sin (t * 10) * 0.3 -- Escala de 1.0 a 1.3
+         _ -> 1.0
+         
       c1 = if turnoActual st == 0 && sc1 == Nothing then clrPrimary else clrBack
       c2 = if turnoActual st == 1 && sc2 == Nothing then clrPrimary else clrBack
-  in translate 0 y $ pictures
+  in translate 0 y $ scale animScale animScale $ pictures -- Aplicar escala
        [ translate (-240) (-10) $ drawText 0.09 (show combo)
        , translate (-30) 0 $ scoreCell sc1 c1
        , translate 70 0  $ scoreCell sc2 c2
@@ -355,7 +423,9 @@ drawScoreRow st row combo =
 
 handleEvent :: Event -> UIState -> UIState
 handleEvent (EventMotion pos) ui = ui { mousePos = pos }
-handleEvent (EventKey (MouseButton LeftButton) Down _ pos) ui = 
+handleEvent (EventKey (MouseButton LeftButton) Down _ pos) ui@UIState{animState} = 
+  -- Bloquear clicks si hay animación en curso
+  if animState /= AnimNone then ui else
   let buttons = activeButtons ui
       clicked = filter (isInside pos) buttons
   in if not (null clicked) 
@@ -372,7 +442,9 @@ handleGridAndDice (mx, my) ui@UIState{gameState, selectedDice}
   | mx > (scoreRX - 150) && mx < (scoreRX + 150) && not (isCurrentPlayerAI ui) =
       let row = floor ((gridTop + (cellH/2) - my) / cellH)
           combos = allCombinations
-      in if row >= 0 && row < length combos then ui { gameState = elegirCombinacion (combos !! row) gameState } else ui
+      in if row >= 0 && row < length combos 
+         then triggerScore (combos !! row) ui -- MODIFICADO: Usar triggerScore
+         else ui
   | otherwise = ui
 
 initialState :: UIState
@@ -387,6 +459,7 @@ initialState = UIState
   NoAction 
   [] 
   Nothing
+  AnimNone -- Estado inicial
 
 runUI :: IO ()
 runUI = play (InWindow "Yatzi Pro" (windowW, windowH) (50, 50)) clrBack 30 initialState render handleEvent update
