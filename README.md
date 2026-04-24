@@ -1,6 +1,6 @@
 # Yatzy
 
-![Yatzy](img.png)
+![Yatzy](img2.png)
 
 A dice game **Yatzy/Yahtzee** implemented in **Haskell** with support for a desktop graphical interface and interactive web server.
 
