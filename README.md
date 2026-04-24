@@ -2,215 +2,215 @@
 
 ![Yatzy](img.png)
 
-Un juego de dados **Yatzy/Yahtzee** implementado en **Haskell** con soporte para interfaz gráfica de escritorio y servidor web interactivo.
+A dice game **Yatzy/Yahtzee** implemented in **Haskell** with support for a desktop graphical interface and interactive web server.
 
 ---
 
-## Descripción del Proyecto
+## Project Description
 
-Yatzy es una implementación completa del clásico juego de dados donde los jugadores tiran dados, los conservan estratégicamente y marcan combinaciones para ganar puntos. El proyecto está diseñado con arquitectura modular y ofrece dos formas de jugar:
+Yatzy is a complete implementation of the classic dice game where players roll dice, strategically keep them, and mark combinations to earn points. The project is designed with modular architecture and offers two ways to play:
 
-1. **Desktop (GUI)**: Interfaz gráfica con soporte para jugar contra IA
-2. **Web**: Servidor HTTP con interfaz web moderna para jugar multijugador
+1. **Desktop (GUI)**: Graphical interface with support for playing against AI
+2. **Web**: HTTP server with modern web interface for multiplayer gameplay
 
 ---
 
-## Estructura del Proyecto
+## Project Structure
 
 ```
 yatzy/
-├── yatzi.cabal              # Configuración de Cabal (dependencias y ejecutables)
-├── README.md                # Este archivo
+├── yatzi.cabal              # Cabal configuration (dependencies and executables)
+├── README.md                # This file
 ├── src/
-│   ├── Main.hs              # Punto de entrada para la versión Desktop
-│   ├── ServerMain.hs        # Punto de entrada para el servidor Web
+│   ├── Main.hs              # Entry point for Desktop version
+│   ├── ServerMain.hs        # Entry point for Web server
 │   └── Game/
-│       ├── Types.hs         # Tipos de datos principales
-│       ├── Logic.hs         # Lógica del juego (puntajes, reglas)
-│       ├── Server.hs        # Servidor HTTP (API REST)
-│       ├── UI.hs            # Interfaz gráfica de escritorio (Gloss)
-│       └── AI.hs            # Sistema de inteligencia artificial
-├── frontend/                # Aplicación web (HTML/CSS/JS)
-│   ├── index.html           # Página principal
-│   ├── app.js               # Lógica cliente (fetch API)
-│   └── style.css            # Estilos modernos
-└── dist-newstyle/           # Artefactos de compilación
+│       ├── Types.hs         # Main data types
+│       ├── Logic.hs         # Game logic (scoring, rules)
+│       ├── Server.hs        # HTTP server (REST API)
+│       ├── UI.hs            # Desktop graphical interface (Gloss)
+│       └── AI.hs            # Artificial intelligence system
+├── frontend/                # Web application (HTML/CSS/JS)
+│   ├── index.html           # Main page
+│   ├── app.js               # Client logic (fetch API)
+│   └── style.css            # Modern styles
+└── dist-newstyle/           # Compilation artifacts
 ```
 
 ---
 
-## Características Principales
+## Main Features
 
-### Lógica del Juego
-- **5 dados** que se lanzan hasta 3 veces por turno
-- **Conservación selectiva** de dados entre tiradas
-- **13 combinaciones** válidas (Unos, Doses, Treses, Cuatro, Cinco, Seis, Trío, Cuarteto, Full House, Pequeña Escalera, Gran Escalera, Yatzy, Chance)
-- **Sistema de puntajes** automático según reglas Yatzy
-- **Soporte multijugador** con turnos alternos
+### Game Logic
+- **5 dice** that are rolled up to 3 times per turn
+- **Selective retention** of dice between rolls
+- **13 valid combinations** (Ones, Twos, Threes, Fours, Fives, Sixes, Three of a Kind, Four of a Kind, Full House, Small Straight, Large Straight, Yatzy, Chance)
+- **Automatic scoring system** according to Yatzy rules
+- **Multiplayer support** with alternating turns
 
-### Versión Desktop
-- Interfaz gráfica renderizada con **Gloss** (Graphics)
-- Juego contra **IA** (toma decisiones automáticas)
-- Animaciones suaves y diseño visual intuitivo
-- Gestión de múltiples jugadores
+### Desktop Version
+- Graphical interface rendered with **Gloss** (Graphics)
+- Play against **AI** (makes automatic decisions)
+- Smooth animations and intuitive visual design
+- Multiple player management
 
-### Versión Web
-- **Servidor Scotty** con API REST
-- Interfaz web moderna y responsiva
-- Almacenamiento de sesiones de juego en memoria
-- Soporte **CORS** para desarrollo
-- Interfaz de usuario interactiva con JavaScript
-
----
-
-## Dependencias
-
-Las dependencias se definen en `yatzi.cabal` y incluyen:
-
-- **base** ≥4.14: Librería estándar de Haskell
-- **containers**: Estructuras de datos (Map, Set)
-- **random**: Generación de números aleatorios
-- **aeson**: Serialización JSON
-- **text**: Manejo eficiente de strings
-- **scotty**: Framework web ligero
-- **transformers**: Mónadas transformadoras
-- **http-types**: Tipos HTTP
-- **wai-middleware-static**: Servir archivos estáticos
-- **gloss**: Librería gráfica 2D
+### Web Version
+- **Scotty server** with REST API
+- Modern and responsive web interface
+- In-memory game session storage
+- **CORS** support for development
+- Interactive user interface with JavaScript
 
 ---
 
-## Instalación y Construcción
+## Dependencies
 
-### Requisitos Previos
-- GHC (Glasgow Haskell Compiler) 9.6.7 o superior
-- Cabal 3.8 o superior
-- Stack (opcional)
+Dependencies are defined in `yatzi.cabal` and include:
 
-### Construcción
+- **base** ≥4.14: Haskell standard library
+- **containers**: Data structures (Map, Set)
+- **random**: Random number generation
+- **aeson**: JSON serialization
+- **text**: Efficient string handling
+- **scotty**: Lightweight web framework
+- **transformers**: Monad transformers
+- **http-types**: HTTP types
+- **wai-middleware-static**: Serve static files
+- **gloss**: 2D graphics library
+
+---
+
+## Installation and Building
+
+### Prerequisites
+- GHC (Glasgow Haskell Compiler) 9.6.7 or higher
+- Cabal 3.8 or higher
+- Stack (optional)
+
+### Building
 
 ```bash
-# Limpiar compilaciones anteriores (opcional)
+# Clean previous compilations (optional)
 cabal clean
 
-# Compilar el proyecto completo
+# Compile the entire project
 cabal build all
 
-# O compilar cada ejecutable individualmente:
-cabal build yatzi              # Versión Desktop
-cabal build yatzi-server       # Versión Web
+# Or compile each executable individually:
+cabal build yatzi              # Desktop version
+cabal build yatzi-server       # Web version
 ```
 
 ---
 
-## Uso
+## Usage
 
-### Versión Desktop
+### Desktop Version
 
 ```bash
 cabal run yatzi
 ```
 
-Esto abrirá una ventana con la interfaz gráfica del juego. Los controles incluyen:
-- **Click en dados**: Seleccionar/deseleccionar dados para conservar
-- **Botón "Tirar"**: Lanzar dados (máximo 3 tiradas por turno)
-- **Botón "Conservar"**: Guardar los dados seleccionados
-- **Click en combinación**: Marcar una combinación y avanzar turno
+This will open a window with the game's graphical interface. Controls include:
+- **Click on dice**: Select/deselect dice to keep
+- **"Roll" button**: Roll dice (maximum 3 rolls per turn)
+- **"Keep" button**: Save the selected dice
+- **Click on combination**: Mark a combination and advance turn
 
-### Versión Web
+### Web Version
 
 ```bash
 cabal run yatzi-server
 ```
 
-Luego abre tu navegador en:
+Then open your browser to:
 ```
 http://localhost:3000
 ```
 
-**Uso en el navegador:**
-1. Ingresa nombres de jugadores separados por coma (ej: "Ana,Beto")
-2. Haz clic en "Crear juego"
-3. Para cada turno:
-   - Haz clic en "Tirar dados" (máximo 3 veces)
-   - Selecciona dados para conservar haciendo clic en ellos
-   - Haz clic en "Conservar seleccionados"
-   - Elige una combinación disponible para marcar puntos
-4. Avanza de turno automáticamente
+**Browser usage:**
+1. Enter player names separated by commas (e.g., "Alice,Bob")
+2. Click "Create game"
+3. For each turn:
+   - Click "Roll dice" (maximum 3 times)
+   - Select dice to keep by clicking on them
+   - Click "Keep selected"
+   - Choose an available combination to score points
+4. Automatically advance to next turn
 
 ---
 
-## Sistema de Puntajes
+## Scoring System
 
-Las combinaciones y sus valores son:
+The combinations and their values are:
 
-| Combinación | Descripción | Puntaje |
+| Combination | Description | Score |
 |------------|------------|---------|
-| **Unos** | Suma de todos los unos | ∑ unos |
-| **Doses** | Suma de todos los doses | ∑ doses |
-| **Treses** | Suma de todos los treses | ∑ treses |
-| **Cuatro** | Suma de todos los cuatros | ∑ cuatros |
-| **Cinco** | Suma de todos los cincos | ∑ cincos |
-| **Seis** | Suma de todos los seises | ∑ seises |
-| **Trío** | 3+ dados iguales | Suma total |
-| **Cuarteto** | 4+ dados iguales | Suma total |
-| **Full House** | 3 iguales + 2 iguales | 25 puntos |
-| **Pequeña Escalera** | 4 dados consecutivos | 30 puntos |
-| **Gran Escalera** | 5 dados consecutivos | 40 puntos |
-| **Yatzy** | 5 dados iguales | 50 puntos |
-| **Chance** | Cualquier combinación | Suma total |
+| **Ones** | Sum of all ones | ∑ ones |
+| **Twos** | Sum of all twos | ∑ twos |
+| **Threes** | Sum of all threes | ∑ threes |
+| **Fours** | Sum of all fours | ∑ fours |
+| **Fives** | Sum of all fives | ∑ fives |
+| **Sixes** | Sum of all sixes | ∑ sixes |
+| **Three of a Kind** | 3+ equal dice | Total sum |
+| **Four of a Kind** | 4+ equal dice | Total sum |
+| **Full House** | 3 equal + 2 equal | 25 points |
+| **Small Straight** | 4 consecutive dice | 30 points |
+| **Large Straight** | 5 consecutive dice | 40 points |
+| **Yatzy** | 5 equal dice | 50 points |
+| **Chance** | Any combination | Total sum |
 
 ---
 
-## Módulos Principales
+## Main Modules
 
 ### `Game.Types`
-Define las estructuras de datos fundamentales:
-- `Dado`: Tipo alias para Int (1-6)
-- `Tiro`: Lista de dados
-- `Combinacion`: Enumeración de las 13 combinaciones válidas
-- `GameState`: Estado completo del juego (jugadores, turno, dados, puntajes)
+Defines the fundamental data structures:
+- `Dado`: Type alias for Int (1-6)
+- `Tiro`: List of dice
+- `Combinacion`: Enumeration of the 13 valid combinations
+- `GameState`: Complete game state (players, turn, dice, scores)
 
 ### `Game.Logic`
-Implementa la lógica de juego pura:
-- `puntaje`: Calcula puntos para una combinación
-- `inicializarEstado`: Crea un nuevo juego
-- `aplicarTirada`: Lanza dados aleatorios
-- `conservarDados`: Guarda dados seleccionados
-- `elegirCombinacion`: Marca una combinación y avanza turno
+Implements pure game logic:
+- `puntaje`: Calculates points for a combination
+- `inicializarEstado`: Creates a new game
+- `aplicarTirada`: Rolls random dice
+- `conservarDados`: Saves selected dice
+- `elegirCombinacion`: Marks a combination and advances turn
 
 ### `Game.Server`
-Servidor HTTP con API REST:
-- `POST /game`: Crear nuevo juego
-- `GET /game/:id`: Obtener estado del juego
-- `POST /game/:id/roll`: Tirar dados
-- `POST /game/:id/keep`: Conservar dados
-- `POST /game/:id/choose`: Elegir combinación
-- Middleware CORS y servicio de archivos estáticos
+HTTP server with REST API:
+- `POST /game`: Create new game
+- `GET /game/:id`: Get game state
+- `POST /game/:id/roll`: Roll dice
+- `POST /game/:id/keep`: Keep dice
+- `POST /game/:id/choose`: Choose combination
+- CORS middleware and static file serving
 
 ### `Game.UI`
-Interfaz gráfica de escritorio:
-- Renderizado con Gloss
-- Manejo de eventos (mouse, teclado)
-- Animaciones de turno
-- Integración con IA
+Desktop graphical interface:
+- Gloss rendering
+- Event handling (mouse, keyboard)
+- Turn animations
+- AI integration
 
 ### `Game.AI`
-Sistema de inteligencia artificial:
-- `aiChooseDice`: Decide qué dados conservar
-- `aiChooseCombo`: Selecciona una combinación estratégicamente
+Artificial intelligence system:
+- `aiChooseDice`: Decides which dice to keep
+- `aiChooseCombo`: Selects a combination strategically
 
 ---
 
-## API REST (Versión Web)
+## REST API (Web Version)
 
-### Crear Juego
+### Create Game
 ```http
 POST /game
 Content-Type: application/json
 
 {
-  "players": ["Ana", "Beto", "Carlos"]
+  "players": ["Alice", "Bob", "Charlie"]
 }
 
 Response:
@@ -220,37 +220,37 @@ Response:
 }
 ```
 
-### Obtener Estado
+### Get State
 ```http
 GET /game/1
 
 Response:
 {
   "turn": 0,
-  "currentPlayer": "Ana",
+  "currentPlayer": "Alice",
   "dice": [3, 4, 1, 5, 2],
   "kept": [],
   "rollsUsed": 1,
-  "available": ["Unos", "Doses", ...],
-  "scores": [["Ana", []], ["Beto", []], ...]
+  "available": ["Ones", "Twos", ...],
+  "scores": [["Alice", []], ["Bob", []], ...]
 }
 ```
 
-### Tirar Dados
+### Roll Dice
 ```http
 POST /game/1/roll
 
 Response:
 {
   "turn": 0,
-  "currentPlayer": "Ana",
+  "currentPlayer": "Alice",
   "dice": [2, 5, 1, 4, 3],
   "rollsUsed": 2,
   ...
 }
 ```
 
-### Conservar Dados
+### Keep Dice
 ```http
 POST /game/1/keep
 Content-Type: application/json
@@ -260,7 +260,7 @@ Content-Type: application/json
 }
 ```
 
-### Elegir Combinación
+### Choose Combination
 ```http
 POST /game/1/choose
 Content-Type: application/json
@@ -272,58 +272,77 @@ Content-Type: application/json
 
 ---
 
-## Tecnologías Utilizadas
+## Technologies Used
 
-| Aspecto | Tecnología |
+| Aspect | Technology |
 |--------|-----------|
-| **Lenguaje Backend** | Haskell |
-| **Framework Web** | Scotty |
-| **Gráficos (Desktop)** | Gloss |
-| **Serialización** | Aeson (JSON) |
-| **Lenguaje Frontend** | JavaScript Vanilla |
-| **Estilos** | CSS3 (Grid, Flexbox, Gradientes) |
+| **Backend Language** | Haskell |
+| **Web Framework** | Scotty |
+| **Graphics (Desktop)** | Gloss |
+| **Serialization** | Aeson (JSON) |
+| **Frontend Language** | JavaScript Vanilla |
+| **Styles** | CSS3 (Grid, Flexbox, Gradients) |
 | **Build Tool** | Cabal |
 
 ---
 
-## Desarrollo
+## Development
 
-### Compilar en modo Watch
+### Watch Build Mode
 ```bash
-# Compilar automáticamente al cambiar archivos
+# Compile automatically when files change
 cabal build --enable-tests --ghc-options=-fhpc
 ```
 
-### Ejecutar Tests
+### Run Tests
 ```bash
-# Si hay tests definidos
+# If tests are defined
 cabal test
 ```
 
-### Recompilar Everything
+### Recompile Everything
 ```bash
 cabal clean && cabal build all
 ```
 
 ---
 
-## Notas de Arquitectura
+## Architecture Notes
 
-1. **Separación de Responsabilidades**: 
-   - `Logic.hs` contiene lógica pura (sin IO)
-   - `Server.hs` y `UI.hs` manejan IO
+1. **Separation of Concerns**: 
+   - `Logic.hs` contains pure logic (no IO)
+   - `Server.hs` and `UI.hs` handle IO
 
-2. **Inmutabilidad**: 
-   - El estado del juego es inmutable
-   - Cada operación retorna un nuevo estado
+2. **Immutability**: 
+   - Game state is immutable
+   - Each operation returns a new state
 
-3. **Multijugador**:
-   - Desktop: Turnos alternos con IA opcional
-   - Web: Múltiples sesiones simultáneas en memoria
+3. **Multiplayer**:
+   - Desktop: Alternating turns with optional AI
+   - Web: Multiple simultaneous sessions in memory
 
 4. **JSON Serialization**:
-   - Tipos derivan automáticamente `ToJSON`/`FromJSON`
-   - Conversión de Enumeraciones a strings lowercase
+   - Types automatically derive `ToJSON`/`FromJSON`
+   - Enum conversion to lowercase strings
 
+---
 
-¡Disfruta jugando Yatzy!
+## Troubleshooting
+
+### Web server won't open in browser
+- Verify that `http://localhost:3000` is accessible
+- Make sure port 3000 is not in use
+- Check the console for error messages
+
+### Dice not rolling correctly
+- Verify you clicked the "Roll dice" button
+- Maximum 3 rolls per turn
+- Kept dice are not re-rolled
+
+### AI not playing
+- AI only works in the Desktop version
+- Verify that players include the AI
+
+---
+
+Enjoy playing Yatzy!
